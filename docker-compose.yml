@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  mysql:
+    image: mysql:latest
+    restart: unless-stopped
+    container_name: a-juliana-noronha-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+    networks:
+      - docker-service
+    volumes:
+      - .docker:/docker-entrypoint-initdb.d
+
+networks:
+  docker-service:
+    driver: bridge
