@@ -13,11 +13,6 @@ class Api::V1::AccountsController < ApplicationController
   def show
     render json: @account, serializer: AccountSerializer, params: params[:include]
   end
-
-  # GET /accounts/{id}/teams
-  def teams
-    render json: @account.teams
-  end
   
 
   # POST /accounts
@@ -25,12 +20,14 @@ class Api::V1::AccountsController < ApplicationController
     @account = Account.new(account_params)
     @account.user_id = @current_user.id
 
-    if @account.save
-      render json: @account, serializer: AccountSerializer, params: params[:include], status: :created
-    else
+    unless @account.save
       render json: { errors: @account.errors.full_messages },
              status: :unprocessable_entity
     end
+
+    update_default()
+
+    render json: @account, serializer: AccountSerializer, params: params[:include], status: :created
   end
 
   # PUT /accounts/{id}
@@ -39,6 +36,8 @@ class Api::V1::AccountsController < ApplicationController
       render json: { errors: @account.errors.full_messages },
              status: :unprocessable_entity
     end
+
+    update_default()
   end
 
   # DELETE /accounts/{id}
@@ -54,13 +53,19 @@ class Api::V1::AccountsController < ApplicationController
       render json: { errors: 'Conta não encontrada' }, status: :not_found
   end
 
+  def update_default
+    if account_params[:is_default]
+      @account.user.accounts.where.not(id: @account.id).update_all(is_default: false)
+    end
+  end
+
   def is_account_owner
     is_admin || @account.user_id == @current_user.id
   end
 
   def account_params
     params.permit(
-      :name, :icon, :color, :account_type, :initial_amount, :status
+      :name, :icon, :color, :account_type, :is_default, :status
     )
   end
 

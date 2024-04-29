@@ -5,7 +5,7 @@ class CreateCategories < ActiveRecord::Migration[6.1]
       t.string :description
       t.string :icon
       t.string :color
-      t.string :status
+      t.string :status, default: "active"
       t.decimal :monthly_limit
       t.belongs_to :user, foreign_key: { to_table: :users }
 
