@@ -19,7 +19,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
+          key_path: ${{ secrets.SSH_PRIVATE_KEY_PATH }}
           port: ${{ secrets.SSH_PORT }}
           source: "./*"
           target: /home/rails/rails-api/production
@@ -32,10 +32,10 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
+          key_path: ${{ secrets.SSH_PRIVATE_KEY_PATH }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            docker exec rails-api /bin/bash -c 'exec mysqldump --databases ajuliananoronha -uroot -p"$MYSQL_ROOT_PASSWORD"' > /root/backup/ajuliananoronha_$(date +"%Y-%m-%d-%H%-M").sql
-        - name: Execute DB migrations
-          run: bin/rake db:migrate
+            docker exec rails-api /bin/bash -c 'exec mysqldump --databases ajuliananoronha -uroot -p"${{ secrets.MYSQL_PASSWORD }}"' > /root/backup/a-juliana-noronha-mysql_$(date +"%Y-%m-%d-%H%-M").sql
+      - name: Execute DB migrations
+        run: bin/rake db:migrate
 
