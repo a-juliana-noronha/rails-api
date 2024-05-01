@@ -10,83 +10,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Configure SSH
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/production.key
-          chmod 600 ~/.ssh/production.key
-          cat >>~/.ssh/config <<END
-          Host production
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/production.key
-            StrictHostKeyChecking no
-          END
-        env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-
-      - name: Pull latest changes from repo
-        run: ssh production  'sudo cd /home/rails/rails-api && git checkout main && git pull origin main'
-
+      - name: Checkout latest app version
+      - uses: actions/checkout@v3
+        with:
+          ref: main
+      - uses: actions/setup-node@1.0.3
+      - name: Install dependencies
+        uses: ruby/setup-ruby@55283cc23133118229fd3f97f9336ee23a179fcf
+        with:
+          bundler-cache: true
       - name: Backup database
-        run: ssh production 'sudo docker exec rails-api /bin/bash -c 'exec mysqldump --databases ajuliananoronha -uroot -p"${{ secrets.MYSQL_PASSWORD }}"' > /root/backup/a-juliana-noronha-mysql_$(date +"%Y-%m-%d-%H%-M").sql'
-
-      - name: Run DB migrations
-        run: ssh production 'cd /home/rails/rails-api && rake db:migrate'
-
-      - name: Restart Rails service
-        run: ssh production 'sudo systemctl restart rails.service'
-
-    # steps:
-    #   - uses: actions/checkout@v3
-    #     with:
-    #       ref: main
-    #   - uses: actions/setup-node@master
-    #   - name: Checkout latest app version
-    #     uses: appleboy/ssh-action@master
-    #     with:
-    #       host: ${{ secrets.SSH_HOST }}
-    #       port: ${{ secrets.SSH_PORT }}
-    #       username: ${{ secrets.SSH_USER }}
-    #       key: ${{ secrets.SSH_PRIVATE_KEY }}
-    #       passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
-    #       script: |
-    #         cd /home/rails/rails-api/production
-    #   - name: Install dependencies
-    #     uses: ruby/setup-ruby@55283cc23133118229fd3f97f9336ee23a179fcf
-    #     with:
-    #       bundler-cache: true
-    #   - name: Backup database
-    #     uses: appleboy/ssh-action@master
-    #     with:
-    #       host: ${{ secrets.SSH_HOST }}
-    #       port: ${{ secrets.SSH_PORT }}
-    #       username: ${{ secrets.SSH_USER }}
-    #       key: ${{ secrets.SSH_PRIVATE_KEY }}
-    #       passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
-    #       script: |
-    #         docker exec rails-api /bin/bash -c 'exec mysqldump --databases ajuliananoronha -uroot -p"${{ secrets.MYSQL_PASSWORD }}"' > /root/backup/a-juliana-noronha-mysql_$(date +"%Y-%m-%d-%H%-M").sql
-    #   - name: Execute DB migrations
-    #     uses: appleboy/ssh-action@master
-    #     with:
-    #       host: ${{ secrets.SSH_HOST }}
-    #       port: ${{ secrets.SSH_PORT }}
-    #       username: ${{ secrets.SSH_USER }}
-    #       key: ${{ secrets.SSH_PRIVATE_KEY }}
-    #       passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
-    #       script: |
-    #         cd /home/rails/rails-api/production
-    #         rake db:migrate
-    #   - name: Restarting Rails service
-    #     uses: appleboy/ssh-action@master
-    #     with:
-    #       host: ${{ secrets.SSH_HOST }}
-    #       port: ${{ secrets.SSH_PORT }}
-    #       username: ${{ secrets.SSH_USER }}
-    #       key: ${{ secrets.SSH_PRIVATE_KEY }}
-    #       passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
-    #       script: |
-    #         sudo systemctl restart rails.service
+        uses: appleboy/ssh-action@1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
+          script: |
+            docker exec rails-api /bin/bash -c 'exec mysqldump --databases ajuliananoronha -uroot -p"${{ secrets.MYSQL_PASSWORD }}"' > /root/backup/a-juliana-noronha-mysql_$(date +"%Y-%m-%d-%H%-M").sql
+      - name: Execute DB migrations
+        uses: appleboy/ssh-action@1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
+          script: |
+            cd /home/rails/rails-api/production
+            rake db:migrate
+      - name: Restarting Rails service
+        uses: appleboy/ssh-action@1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
+          script: |
+            sudo systemctl restart rails.service
 
