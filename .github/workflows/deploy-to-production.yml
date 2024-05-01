@@ -10,16 +10,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout latest app version
+      - name: Pulling latest changes from main branch
         uses: actions/checkout@v3
         with:
           ref: main
-      - name: Setting up node
-        uses: actions/setup-node@master
-      - name: Install dependencies
-        uses: ruby/setup-ruby@55283cc23133118229fd3f97f9336ee23a179fcf
+      - uses: actions/setup-node@v4
         with:
-          bundler-cache: true
+          node-version: 20
+      - name: Copy files via scp
+        uses: appleboy/scp-action@98930d398ce425af0148ea8a0e3295cd04fe2b7a
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "./*"
+          target: /home/rails/rails-api/production
       - name: Backup database
         uses: appleboy/ssh-action@master
         with:
@@ -28,7 +35,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
           script: |
-            docker exec rails-api /bin/bash -c 'exec mysqldump --databases ajuliananoronha -uroot -p"${{ secrets.MYSQL_PASSWORD }}"' > /root/backup/a-juliana-noronha-mysql_$(date +"%Y-%m-%d-%H%-M").sql
+            docker exec a-juliana-noronha-mysql /bin/bash -c 'exec mysqldump --databases ajuliananoronha -uroot -p"${{ secrets.MYSQL_PASSWORD }}"' > /home/rails/backup/rails-api_a-juliana-noronha-mysql_$(date +"%Y-%m-%d-%H%-M").sql
       - name: Execute DB migrations
         uses: appleboy/ssh-action@master
         with:
@@ -38,6 +45,7 @@ jobs:
           passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
           script: |
             cd /home/rails/rails-api/production
+            systemctl stop rails.service
             rake db:migrate
       - name: Restarting Rails service
         uses: appleboy/ssh-action@master
@@ -47,5 +55,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
           script: |
-            sudo systemctl restart rails.service
+            sudo systemctl start rails.service
 

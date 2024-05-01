@@ -21,6 +21,7 @@ Bundler.require(*Rails.groups)
 
 module AJulianaNoronhaAPI
   class Application < Rails::Application
+    config.hosts << /.*\.palpittero\.com\.br/
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 6.1
 
