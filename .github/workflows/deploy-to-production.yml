@@ -13,7 +13,7 @@ jobs:
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/production.key
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/production.key
           chmod 600 ~/.ssh/production.key
           cat >>~/.ssh/config <<END
           Host production
@@ -28,7 +28,7 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
 
       - name: Pull latest changes from repo
-        run: ssh production 'sudo cd /home/rails/rails-api && git checkout main && git pull origin main'
+        run: ssh production  'sudo cd /home/rails/rails-api && git checkout main && git pull origin main'
 
       - name: Backup database
         run: ssh production 'sudo docker exec rails-api /bin/bash -c 'exec mysqldump --databases ajuliananoronha -uroot -p"${{ secrets.MYSQL_PASSWORD }}"' > /root/backup/a-juliana-noronha-mysql_$(date +"%Y-%m-%d-%H%-M").sql'
