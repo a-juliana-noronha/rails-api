@@ -11,11 +11,11 @@ jobs:
 
     steps:
       - name: Checkout latest app version
-      - uses: actions/checkout@v3
+        uses: actions/checkout@v3
         with:
           ref: main
       - name: Setting up node
-      - uses: actions/setup-node@1.0.3
+        uses: actions/setup-node@1.0.3
       - name: Install dependencies
         uses: ruby/setup-ruby@55283cc23133118229fd3f97f9336ee23a179fcf
         with:
