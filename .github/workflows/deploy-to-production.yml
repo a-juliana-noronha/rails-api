@@ -26,7 +26,7 @@ jobs:
           passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
           source: "./*"
-          target: /root/apps/rails-api
+          target: /home/rails/rails-api
       - name: Backup database
         uses: appleboy/ssh-action@master
         with:
@@ -35,7 +35,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
           script: |
-            docker exec a-juliana-noronha-mysql /bin/bash -c 'exec mysqldump --databases ajuliananoronha -uroot -p"${{ secrets.MYSQL_PASSWORD }}"' > /root/apps/backup/rails-api_a-juliana-noronha-mysql_$(date +"%Y-%m-%d-%H%-M").sql
+            docker exec a-juliana-noronha-mysql /bin/bash -c 'exec mysqldump --databases ajuliananoronha -uroot -p"${{ secrets.MYSQL_PASSWORD }}"' > /home/backups/rails-api_a-juliana-noronha-mysql_$(date +"%Y-%m-%d-%H%-M").sql
       - name: Execute DB migrations
         uses: appleboy/ssh-action@master
         with:
@@ -44,7 +44,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
           script: |
-            cd /root/apps/rails-api
+            cd /home/rails/rails-api
             rake db:migrate
       - name: Restarting Rails service
         uses: appleboy/ssh-action@master
@@ -54,5 +54,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
           script: |
-            sudo systemctl start rails.service
+            systemctl start rails.service
 
