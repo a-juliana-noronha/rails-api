@@ -45,7 +45,6 @@ jobs:
           passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
           script: |
             cd /home/rails/rails-api/production
-            systemctl stop rails.service
             rake db:migrate
       - name: Restarting Rails service
         uses: appleboy/ssh-action@master
